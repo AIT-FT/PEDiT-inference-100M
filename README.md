@@ -1,6 +1,6 @@
 # PEDiT-100M (Phase EdgeFlow Diffusion Transformer)
 
-PEDiT-100M is a compact diffusion model based on a Transformer architecture (DiT) with phase modulation (Phase Rectified Flow). With only ~100 million parameters, the network achieves sub-second inference even on consumer-grade GPUs (300–500 ms per image).
+PEDiT-100M is a compact diffusion model based on a Transformer architecture (DiT) with phase modulation (Phase Rectified Flow). With only ~100 million parameters, the network achieves sub-second inference on consumer GPUs such as the **NVIDIA GeForce RTX 3060** (300–500 ms per image).
 
 Model checkpoints are openly available on Hugging Face: [AIT-FT/PEDiT-100M](https://huggingface.co/AIT-FT/PEDiT-100M).
 
@@ -36,6 +36,11 @@ Accurate text rendering has historically been a significant challenge for diffus
 4. **Comic Sans MS (`comic`)** — Informal handwritten style.
 5. **Impact (`impact`)** — Condensed, ultra-bold display typeface.
 
+### Out-of-Distribution Generalization (The "31" Experiment):
+To prove that the architecture learns compositional rules rather than merely memorizing the training dataset, **the number "31" was deliberately excluded from the training data**.
+
+The model was exposed to individual digits "1" and "3" and various other two-digit combinations, but **never saw an image of "31" during training**. At evaluation time, PEDiT-100M successfully rendered "31" across all 5 fonts, demonstrating true spatial and typographic compositionality.
+
 ### Prompt Format:
 Prompts are specified by the target number and font keyword:
 ```text
@@ -50,18 +55,22 @@ Prompts are specified by the target number and font keyword:
 
 ## Proof of Work & Generation Latency
 
-Below are unedited step-by-step generations captured directly from the Web UI using **8 Euler steps**. Timings demonstrate a per-step latency of **30–45 ms** on consumer hardware.
+Below are unedited step-by-step generations captured directly from the Web UI running locally on a consumer **NVIDIA GeForce RTX 3060 (12 GB)** using **8 Euler steps**. Timings demonstrate a per-step latency of **30–45 ms** (total end-to-end latency: 360–540 ms).
 
 ### 1. Number 1 in Comic Sans MS (`1 comic`)
 The soft, slanted stroke characteristic of Comic Sans clearly resolves by step 3:
 ![Generation 1 comic](assets/sample_1_comic.png)
 
-### 2. Number 31 in Courier New (`31 courier`)
-Consistent slab serifs and monospaced proportions of Courier New. Model step latency: 31–33 ms, VAE decode: 8 ms, total end-to-end inference: **361 ms**:
+### 2. Number 31 in Courier New (`31 courier`) — Zero-Shot Generalization
+The number **31** was completely absent from the training set. The model correctly composes the numerals "3" and "1" with exact Courier New monospaced proportions and slab serifs.
+* **Step Latency**: 31–33 ms per step
+* **VAE Decode**: 8 ms
+* **Total Latency**: **361 ms** (on RTX 3060)
+
 ![Generation 31 courier](assets/sample_31_courier.png)
 
 ### 3. Number 65 in Impact (`65 impact`)
-Dense, heavy strokes and tight vertical proportion of Impact. Total generation time: ~540 ms:
+Dense, heavy strokes and tight vertical proportion of Impact. Total generation time: ~540 ms on RTX 3060:
 ![Generation 65 impact](assets/sample_65_impact.png)
 
 ---
