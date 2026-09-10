@@ -15,6 +15,9 @@ samples/
 *.jpg
 *.jpeg
 *.webp
+!assets/**
+
+push_to_github.bat
 
 # Cache & Hugging Face
 .cache/
