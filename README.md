@@ -1,43 +1,43 @@
 # PEDiT-100M (Phase EdgeFlow Diffusion Transformer)
 
-PEDiT-100M — компактная диффузионная модель генерации изображений на базе трансформерной архитектуры (DiT) с фазовой модуляцией (Phase Rectified Flow). Размер модели составляет всего ~100 миллионов параметров, что обеспечивает субсекундную генерацию даже на обычных потребительских видеокартах (300–500 мс на изображение).
+PEDiT-100M is a compact diffusion model based on a Transformer architecture (DiT) with phase modulation (Phase Rectified Flow). With only ~100 million parameters, the network achieves sub-second inference even on consumer-grade GPUs (300–500 ms per image).
 
-Веса модели размещены в открытом доступе на Hugging Face: [AIT-FT/PEDiT-100M](https://huggingface.co/AIT-FT/PEDiT-100M).
+Model checkpoints are openly available on Hugging Face: [AIT-FT/PEDiT-100M](https://huggingface.co/AIT-FT/PEDiT-100M).
 
-Все необходимые компоненты (веса модели в FP16, FP8 или INT8, текстовый энкодер mT5 и VAE-декодер TAESD) скачиваются автоматически при первом запуске.
-
----
-
-## Архитектура
-
-В основе модели лежит архитектура Diffusion Transformer со специализированными фазовыми блоками:
-
-![Архитектура PEDiT-100M](assets/architecture.png)
-
-### Ключевые компоненты:
-* **DiT Blocks (x12)**: 12 блоков трансформера с Grouped-Query Attention (GQA) и RMSNorm.
-* **Phase Experts**: блоки фазовых экспертов, динамически адаптирующиеся на разных стадиях диффузии (разделение задач на базовую композицию и детализацию глифов).
-* **SwiGLU FFN**: функции активации SwiGLU внутри блоков прямого распространения.
-* **Адаптивная модуляция (Ada Proj & Cond MLP)**: объединение временных эмбеддингов, фазовых эмбеддингов и текстовых представлений для управления скрытым пространством.
-* **Сверхбыстрый VAE-декодер**: интеграция легковесного TAESD, декодирующего латентное изображение в пиксели за 8–50 мс.
+All required assets (model weights in FP16, FP8, or INT8, the mT5 text encoder, and the TAESD VAE decoder) are downloaded automatically on first run.
 
 ---
 
-## Текущий этап обучения и возможности
+## Architecture
 
-Модель обучена на задаче точного рендеринга текста и типографики: генерация двузначных чисел от **1 до 99** в **5 различных шрифтах**.
+The model is built upon a Diffusion Transformer backbone with dedicated phase conditioning and expert routing:
 
-Генерация текста в диффузионных сетях традиционно считается сложной из-за склонности моделей к артефактам в тонких деталях символов. Архитектура PEDiT-100M устойчиво передает характерные черты каждого шрифта и четкую геометрию глифов.
+![PEDiT-100M Architecture](assets/architecture.png)
 
-### Поддерживаемые шрифты:
-1. **Arial (`arial`)** — чистый рубленый гротеск без засечек (sans-serif).
-2. **Times New Roman (`times`)** — классический шрифт с выраженными засечками (serif).
-3. **Courier New (`courier`)** — моноширинный шрифт печатной машинки (monospace).
-4. **Comic Sans MS (`comic`)** — неформальный рукописный стиль.
-5. **Impact (`impact`)** — плотный сверхжирный акцидентный шрифт (heavy bold headline).
+### Key Components:
+* **DiT Blocks (x12)**: 12 transformer blocks featuring Grouped-Query Attention (GQA) and RMSNorm.
+* **Phase Experts**: Phase-specific expert modules that adapt dynamically across diffusion stages, decoupling coarse structural composition from fine glyph detailing.
+* **SwiGLU FFN**: SwiGLU activation functions within the feed-forward networks.
+* **Adaptive Modulation (Ada Proj & Cond MLP)**: Concatenation of timestep embeddings, phase embeddings, and pooled text representations to modulate intermediate DiT features.
+* **Ultra-fast VAE Decoder**: Lightweight TAESD decoder translating latent representations to RGB pixels in 8–50 ms.
 
-### Формат промпта:
-Промпт состоит из числа и названия шрифта:
+---
+
+## Current Training Stage & Capabilities
+
+The model has been trained on a focused typographic rendering task: generating two-digit numbers from **1 to 99** in **5 distinct fonts**.
+
+Accurate text rendering has historically been a significant challenge for diffusion models due to high sensitivity to small glyph artifacts. PEDiT-100M reliably preserves letterform geometry, stroke weights, and distinctive typographic styles.
+
+### Supported Fonts:
+1. **Arial (`arial`)** — Clean sans-serif grotesque.
+2. **Times New Roman (`times`)** — Classic serif typeface with distinct brackets and serifs.
+3. **Courier New (`courier`)** — Monospaced typewriter font.
+4. **Comic Sans MS (`comic`)** — Informal handwritten style.
+5. **Impact (`impact`)** — Condensed, ultra-bold display typeface.
+
+### Prompt Format:
+Prompts are specified by the target number and font keyword:
 ```text
 1 comic
 31 courier
@@ -48,116 +48,116 @@ PEDiT-100M — компактная диффузионная модель ген
 
 ---
 
-## Примеры работы и замеры скорости
+## Proof of Work & Generation Latency
 
-Ниже показан реальный процесс генерации в веб-интерфейсе за **8 шагов** алгоритма Euler. Замеры времени показывают скорость порядка **30–45 мс на шаг модели** на потребительском GPU.
+Below are unedited step-by-step generations captured directly from the Web UI using **8 Euler steps**. Timings demonstrate a per-step latency of **30–45 ms** on consumer hardware.
 
-### 1. Число 1 в шрифте Comic Sans MS (`1 comic`)
-Мягкий и наклонный штрих Comic Sans четко формируется уже к 3-му шагу:
-![Генерация 1 comic](assets/sample_1_comic.png)
+### 1. Number 1 in Comic Sans MS (`1 comic`)
+The soft, slanted stroke characteristic of Comic Sans clearly resolves by step 3:
+![Generation 1 comic](assets/sample_1_comic.png)
 
-### 2. Число 31 в шрифте Courier New (`31 courier`)
-Моноширинные пропорции и засечки Courier New. Время шага модели: 31–33 мс, декодирование VAE: 8 мс, суммарное время инференса: **361 мс**:
-![Генерация 31 courier](assets/sample_31_courier.png)
+### 2. Number 31 in Courier New (`31 courier`)
+Consistent slab serifs and monospaced proportions of Courier New. Model step latency: 31–33 ms, VAE decode: 8 ms, total end-to-end inference: **361 ms**:
+![Generation 31 courier](assets/sample_31_courier.png)
 
-### 3. Число 65 в шрифте Impact (`65 impact`)
-Плотное и массивное начертание шрифта Impact. Полная генерация занимает ~540 мс:
-![Генерация 65 impact](assets/sample_65_impact.png)
-
----
-
-## Доступные версии весов
-
-В репозитории на Hugging Face подготовлены три варианта:
-* **FP16** (`PEDiT-100M-FP16.pt`, ~206 МБ) — стандартный режим половинной точности с максимальной детализацией.
-* **FP8** (`PEDiT-100M-FP8.pt`, ~103 МБ) — 8-битный формат с плавающей точкой (E4M3), экономит видеопамять в 2 раза без заметной потери качества.
-* **INT8** (`PEDiT-100M-INT8.pt`, ~103 МБ) — динамическое целочисленное квантование весов для минимального расхода ресурсов.
+### 3. Number 65 in Impact (`65 impact`)
+Dense, heavy strokes and tight vertical proportion of Impact. Total generation time: ~540 ms:
+![Generation 65 impact](assets/sample_65_impact.png)
 
 ---
 
-## Быстрый запуск
+## Available Checkpoints
+
+The Hugging Face repository provides three quantization tiers:
+* **FP16** (`PEDiT-100M-FP16.pt`, ~206 MB) — Standard half-precision baseline with maximum fidelity.
+* **FP8** (`PEDiT-100M-FP8.pt`, ~103 MB) — 8-bit floating point (E4M3), halving VRAM requirements with virtually no perceptual loss.
+* **INT8** (`PEDiT-100M-INT8.pt`, ~103 MB) — Dynamic per-channel weight quantization for low-resource inference.
+
+---
+
+## Quick Start
 
 ### Windows
-1. Склонируйте репозиторий:
+1. Clone the repository:
    ```cmd
    git clone https://github.com/AIT-FT/PEDiT-inference-100M.git
    cd PEDiT-inference-100M
    ```
-2. Запустите Web UI:
+2. Launch the Web UI:
    ```cmd
    run_server.bat
    ```
-   Откройте в браузере: `http://localhost:8000`
+   Open your browser at: `http://localhost:8000`
 
-3. Или запустите генерацию через консоль:
+3. Or run command-line inference:
    ```cmd
    run_inference.bat
    ```
 
 ### Linux / macOS
-1. Склонируйте репозиторий:
+1. Clone the repository:
    ```bash
    git clone https://github.com/AIT-FT/PEDiT-inference-100M.git
    cd PEDiT-inference-100M
    chmod +x *.sh
    ```
-2. Запустите Web UI:
+2. Launch the Web UI:
    ```bash
    ./run_server.sh
    ```
-   Откройте в браузере: `http://localhost:8000`
+   Open your browser at: `http://localhost:8000`
 
-3. Или запустите CLI:
+3. Or run command-line inference:
    ```bash
    ./run_inference.sh
    ```
 
 ---
 
-## Загрузка моделей
+## Model Downloads
 
-При первом запуске скрипты сами загрузят нужную модель. Также доступна предварительная загрузка:
+Inference scripts automatically download required checkpoints on demand. You can also pre-fetch models manually:
 
 * **Windows**: `download_models.bat`
 * **Linux**: `./download_models.sh`
 
-Или через CLI:
+Or via CLI:
 ```bash
-# Скачать конкретную версию
+# Download a specific precision
 python download_utils.py --model fp16
 python download_utils.py --model fp8
 python download_utils.py --model int8
 
-# Скачать все версии сразу
+# Download all variants
 python download_utils.py --all
 ```
 
 ---
 
-## Рекомендуемые параметры
+## Recommended Settings
 
-* **Разрешение**: 256x256 (нативное для текущей фазы обучения).
-* **Шаги генерации**: 8 (Euler).
-* **CFG Scale**: 1.0 (максимальная скорость) или 1.2–1.5 (более выраженное соответствие шрифту).
-* **Seed**: фиксированное число для воспроизводимости, либо `-1` для случайного сида.
-
----
-
-## Структура репозитория
-
-* `server.py` — веб-сервер FastAPI с поддержкой WebSocket для пошаговой трансляции генерации.
-* `inference.py` — консольный скрипт генерации изображений.
-* `model.py` — архитектура нейросети `EdgeFlowPhaseV2`.
-* `encoders.py` — загрузчик текстового энкодера mT5 и VAE (TAESD).
-* `rectified_flow.py` — сэмплер Phase Rectified Flow.
-* `download_utils.py` — менеджер проверки и скачивания моделей с Hugging Face.
-* `check_deps.py` — автоматическая проверка и настройка зависимостей Python.
-* `export_tensorrt.py` — скрипт оптимизации под NVIDIA TensorRT.
-* `static/` — веб-интерфейс (`index.html`, `script.js`, `style.css`).
-* `assets/` — схема архитектуры и примеры генерации.
+* **Resolution**: 256x256 (native resolution for current checkpoint).
+* **Sampling Steps**: 8 (Euler).
+* **CFG Scale**: 1.0 (recommended for fastest inference) or 1.2–1.5 (for stricter typographic adherence).
+* **Seed**: Any integer for reproducible results, or `-1` for random seeds.
 
 ---
 
-## Лицензия
+## Repository Structure
 
-Проект распространяется под лицензией Apache License 2.0.
+* `server.py` — FastAPI server with WebSocket support for live step-by-step streaming.
+* `inference.py` — Standalone command-line inference tool.
+* `model.py` — `EdgeFlowPhaseV2` neural network architecture.
+* `encoders.py` — mT5 text encoder and TAESD VAE loaders.
+* `rectified_flow.py` — Phase Rectified Flow sampler.
+* `download_utils.py` — Automated Hugging Face model downloader and integrity manager.
+* `check_deps.py` — Dependency and virtual environment checker.
+* `export_tensorrt.py` — TensorRT optimization pipeline.
+* `static/` — Web UI frontend (`index.html`, `script.js`, `style.css`).
+* `assets/` — Architecture diagrams and generation proof samples.
+
+---
+
+## License
+
+This project is licensed under the Apache License 2.0.
