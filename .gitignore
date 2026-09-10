@@ -1,3 +1,34 @@
+# Checkpoints & model weights (downloaded automatically from Hugging Face)
+checkpoints*/
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.ckpt
+*.onnx
+*.engine
+
+# Generated outputs
+outputs/
+samples/
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Cache & Hugging Face
+.cache/
+hf_cache*/
+*.part
+
+# Environment & secrets
+.env
+.env.*
+*.key
+*.pem
+token.json
+credentials.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
